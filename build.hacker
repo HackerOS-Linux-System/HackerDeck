@@ -1,0 +1,4 @@
+// flutter
+> cd source-code
+> flutter create .
+> flutter build linux -v
