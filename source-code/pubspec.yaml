@@ -1,7 +1,14 @@
+name: hackerdeck
+description: HackerDeck
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
 dependencies:
   flutter:
     sdk: flutter
-  # Dodane zależności
-  file_picker: ^6.1.1 # Do wybierania plików .exe
-  process_run: ^0.12.7 # Do uruchamiania programów
-  
+
+  file_picker: ^6.1.1
+  process_run: ^1.2.4
+
