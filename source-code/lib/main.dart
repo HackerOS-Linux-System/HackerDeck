@@ -29,8 +29,8 @@ class GamedeckApp extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF007BFF),
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           ),
         ),
       ),
@@ -107,30 +107,30 @@ class _GamedeckHomePageState extends State<GamedeckHomePage> {
         ],
       ),
       body: games.isEmpty
-          ? const Center(
-              child: Text(
-                'Brak gier w bibliotece.\nDodaj swoją pierwszą grę!',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, color: Colors.white70),
-              ),
-            )
-          : GridView.builder(
-              padding: const EdgeInsets.all(20),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 300,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 20,
-                mainAxisSpacing: 20,
-              ),
-              itemCount: games.length,
-              itemBuilder: (context, index) {
-                final game = games[index];
-                return GameCard(
-                  game: game,
-                  onPlay: () => _launchGame(game.path),
-                );
-              },
-            ),
+      ? const Center(
+        child: Text(
+          'Brak gier w bibliotece.\nDodaj swoją pierwszą grę!',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 18, color: Colors.white70),
+        ),
+      )
+      : GridView.builder(
+        padding: const EdgeInsets.all(20),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 300,
+          childAspectRatio: 0.75,
+          crossAxisSpacing: 20,
+          mainAxisSpacing: 20,
+        ),
+        itemCount: games.length,
+        itemBuilder: (context, index) {
+          final game = games[index];
+          return GameCard(
+            game: game,
+            onPlay: () => _launchGame(game.path),
+          );
+        },
+      ),
     );
   }
 }
