@@ -1,4 +1,9 @@
 // flutter
+// ninja-build
+// build-essential
+// clang
+// cmake
+
 > cd source-code
 > flutter create .
 > flutter build linux -v
