@@ -1,6 +1,6 @@
 name: hackerdeck
-description: HackerDeck
-version: 1.0.0+1
+description: Gamedeck PC
+publish_to: 'none'
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -10,5 +10,7 @@ dependencies:
     sdk: flutter
 
   file_picker: ^6.1.1
-  process_run: ^1.2.4
+  path: ^1.9.0
 
+flutter:
+  uses-material-design: true
