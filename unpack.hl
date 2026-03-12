@@ -1,2 +1,5 @@
 // curl
-> 
+
+> cd ~/.hackeros && mkdir HackerDeck && mkdir Protons && mkdir Prefixes
+> sudo curl -L https://github.com/HackerOS-Linux-System/HackerDeck/releases/download/v0.2/HackerDeck -o /usr/share/HackerOS/Scripts/HackerOS-Apps/HackerDeck && sudo chmod +x /usr/share/HackerOS/Scripts/HackerOS-Apps/HackerDeck
+> sudo curl -L https://raw.githubusercontent.com/HackerOS-Linux-System/HackerDeck/main/HackerDeck.desktop -o /usr/share/applications/HackerDeck.desktop
