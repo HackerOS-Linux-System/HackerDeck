@@ -1,9 +1,6 @@
-// flutter
-// ninja-build
-// build-essential
-// clang
-// cmake
+// npm
+// cargo
 
 > cd source-code
-> flutter create .
-> flutter build linux -v
+> npm run tauri:build
+! dev mode ---> > npm run tauri:dev
