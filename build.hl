@@ -1,6 +1,5 @@
-// npm
-// cargo
+// golang
 
 > cd source-code
-> npm run tauri:build
-! dev mode ---> > npm run tauri:dev
+> go get HackerDeck 
+> go build
