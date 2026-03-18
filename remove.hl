@@ -1,3 +1,2 @@
-> cd ~/.hackeros/
-> sudo rm -rf HackerDeck
-> sudo rm -rf /usr/share/HackerOS/Scripts/HackerOS-Apps/HackerDeck
+> sudo rm -rf /usr/bin/hackerdeck
+> sudo rm -rf /usr/share/applications/HackerDeck.desktop
