@@ -1,0 +1,4 @@
+// curl
+
+> sudo curl -L https://github.com/HackerOS-Linux-System/HackerDeck/releases/download/v0.3/hackerdeck -o /usr/bin/hackerdeck && sudo chmod +x /usr/bin/hackerdeck
+> sudo curl -L https://raw.githubusercontent.com/HackerOS-Linux-System/HackerDeck/main/HackerDeck.desktop -o /usr/share/applications/HackerDeck.desktop
