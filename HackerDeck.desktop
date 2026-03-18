@@ -1,1 +1,10 @@
-
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=HackerDeck
+Comment=Emulator Androida
+Exec=/usr/bin/hackerdeck
+Icon=
+Terminal=false
+Categories=Utility;Development;
+StartupNotify=true
