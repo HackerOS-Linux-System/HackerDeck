@@ -1,5 +1,7 @@
 # HackerDeck
 
+# What is HackerDeck?
+HackerDeck is an overlay for Waydroid, the equivalent of Windows BlueStacks.
+
 # Installation
-Use hacker unpack hackerdeck
-If you wont session run: hacker unpack hackerdeck-session
+hacker unpack hackerdeck (only for HackerOS)
