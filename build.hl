@@ -1,5 +1,5 @@
-// golang
+// flutter
 
 > cd source-code
-> go get HackerDeck 
-> go build
+> flutter create .
+> flutter build linux
