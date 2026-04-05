@@ -1,6 +1,6 @@
 name: hackerdeck
-description: Waydroid management tool with keymapper and multi-instance
-version: 1.0.0
+description: Waydroid management tool with keymapper, APK store and multi-instance support
+version: 0.4.0
 publish_to: 'none'
 
 environment:
