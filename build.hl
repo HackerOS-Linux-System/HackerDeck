@@ -1,5 +1,3 @@
-// flutter
+|| H#
 
-> cd source-code
-> flutter create .
-> flutter build linux
+> bit build --release
