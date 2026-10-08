@@ -1,1 +1,42 @@
+[package]
+-> name        => hackerdeck
+-> version     => 0.4.0
+-> description => Waydroid management tool with keymapper, APK store and multi-instance support
+-> authors     => ["HackerOS Team"]
+-> license     => MIT
+-> lang        => h#
 
+[edition]
+-> edition => 2026
+
+[layout]
+-> src => src
+
+[build]
+-> link => static
+
+[dependencies]
+-> silver => newest
+
+[default-build]
+-> profile => release
+-> target  => h#
+-> emit    => bin
+-> run     => true
+
+[hooks]
+-> pre-build => cd frontend && npm install --no-audit --no-fund && npm run build
+
+[commands]
+-> frontend
+--> run => cd frontend && npm install --no-audit --no-fund && npm run build
+--> description => Zbuduj frontend (Svelte + TypeScript -> frontend/dist/app.js)
+-> watch
+--> run => cd frontend && npm run watch
+--> description => Buduj frontend przy kazdej zmianie (uruchom razem z `bit run` - hot reload podchwyci dist/app.js)
+-> typecheck
+--> run => cd frontend && npm install --no-audit --no-fund && npm run check
+--> description => Sprawdz typy TypeScript i komponenty Svelte (svelte-check)
+-> install-local
+--> run => sh scripts/install-local.sh
+--> description => Zainstaluj zbudowana aplikacje do /usr/lib/HackerOS/HackerDeck + /usr/bin/hackerdeck
