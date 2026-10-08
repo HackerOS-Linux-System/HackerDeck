@@ -1,0 +1,99 @@
+mod shell
+
+fn ends_with_apk(path: string) -> bool is
+    let low: string = string_lower(path)
+    let n: int = string_len(low)
+    if n < 5 is return false end
+    return string_slice(low, n - 4, n) == ".apk"
+end
+
+fn is_http_url(url: string) -> bool is
+    return string_slice(url, 0, 7) == "http://" || string_slice(url, 0, 8) == "https://"
+end
+
+;; Pobranie APK -> weryfikacja (naglowek "PK" = zip) -> waydroid app install.
+;; Gdy to nie jest APK (np. strona z wydaniami) - otwiera URL w przegladarce,
+;; kod wyjscia 3 (frontend pokazuje komunikat).
+fn store_install_script(name: string, url: string) -> string is
+    let dest: string = "/tmp/hackerdeck_" + shell::sanitize(name) + ".apk"
+    let mut s: string = "D=" + shell::sq(dest) + "; U=" + shell::sq(url) + "; rm -f \"$D\"; "
+    s = s + "(wget -q -O \"$D\" \"$U\" || curl -fsSL -o \"$D\" \"$U\"); "
+    s = s + "if [ -s \"$D\" ] && [ \"$(head -c 2 \"$D\")\" = \"PK\" ]; then "
+    s = s + "waydroid app install \"$D\"; rc=$?; rm -f \"$D\"; exit $rc; "
+    s = s + "else rm -f \"$D\"; xdg-open \"$U\" >/dev/null 2>&1; exit 3; fi"
+    return s
+end
+
+;; Krok kreatora: modul binder (modprobe -> wbudowany /dev/binder -> modules-extra).
+fn wizard_binder_script() -> string is
+    let mut s: string = "if pkexec modprobe binder_linux num_devices=4; then exit 0; fi; "
+    s = s + "echo 'modprobe binder_linux failed - checking /dev/binder'; "
+    s = s + "if [ -e /dev/binder ]; then echo '/dev/binder already exists (binder built into kernel)'; exit 0; fi; "
+    s = s + "echo 'Binder unavailable. Trying linux-modules-extra...'; "
+    s = s + "pkexec apt-get install -y linux-modules-extra-$(uname -r)"
+    return s
+end
+
+pub fn script_for(action: string, arg: string, arg2: string) -> string is
+    ;; --- sesja / status ---
+    if action == "status" is return "waydroid status" end
+    if action == "session_start" is return "waydroid session start" end
+    if action == "session_stop" is return "waydroid session stop" end
+    if action == "show_ui" is return "waydroid show-full-ui" end
+
+    ;; --- aplikacje ---
+    if action == "app_list" is return "waydroid app list" end
+    if action == "app_launch" is
+        if arg == "" is return "" end
+        return "waydroid app launch " + shell::sq(arg)
+    end
+    if action == "app_remove" is
+        if arg == "" is return "" end
+        return "waydroid app remove " + shell::sq(arg)
+    end
+    if action == "app_install" is
+        if !ends_with_apk(arg) is return "" end
+        return "waydroid app install " + shell::sq(arg)
+    end
+    if action == "store_install" is
+        if arg == "" || !is_http_url(arg2) is return "" end
+        return store_install_script(arg, arg2)
+    end
+
+    ;; --- instancje ---
+    if action == "instance_create" is
+        if !shell::is_safe_name(arg) is return "" end
+        return "pkexec mkdir -p /var/lib/waydroid_" + arg
+    end
+
+    ;; --- narzedzia: Waydroid ---
+    if action == "waydroid_init_gapps" is return "waydroid init -s GAPPS" end
+    if action == "waydroid_init" is return "waydroid init" end
+    if action == "waydroid_shell" is return "waydroid shell" end
+    if action == "container_logs" is return "journalctl -u waydroid-container -n 80 --no-pager" end
+
+    ;; --- narzedzia: binder / kernel ---
+    if action == "binder_modprobe" is return "pkexec modprobe binder_linux num_devices=4" end
+    if action == "binder_ls" is return "ls -la /dev/binder*" end
+    if action == "kernel_version" is return "uname -r" end
+
+    ;; --- narzedzia: ADB ---
+    if action == "adb_devices" is return "adb devices" end
+    if action == "adb_shell" is return "adb shell" end
+    if action == "adb_ping" is return "adb shell ping -c 3 8.8.8.8" end
+
+    ;; --- narzedzia: system ---
+    if action == "ram" is return "free -h" end
+    if action == "disk" is return "df -h /var/lib/waydroid" end
+
+    ;; --- kreator pierwszego uruchomienia ---
+    if action == "wiz_apt_update" is return "pkexec apt-get update -y" end
+    if action == "wiz_apt_deps" is return "pkexec apt-get install -y curl ca-certificates lxc android-tools-adb wget" end
+    if action == "wiz_binder" is return wizard_binder_script() end
+    if action == "wiz_binder_persist" is return "echo binder_linux | pkexec tee /etc/modules-load.d/binder.conf" end
+    if action == "wiz_repo" is return "pkexec bash -c 'curl -fsSL https://repo.waydro.id | bash'" end
+    if action == "wiz_waydroid_install" is return "pkexec apt-get install -y waydroid" end
+    if action == "wiz_waydroid_init" is return "waydroid init -s GAPPS" end
+
+    return ""
+end
