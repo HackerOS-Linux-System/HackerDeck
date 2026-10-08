@@ -1,0 +1,18 @@
+use "std -> fs"      from "fs"
+use "std -> env"     from "env"
+use "std -> process" from "process"
+
+pub fn config_dir() -> string is
+    return env::get_or("HOME", "/tmp") + "/.config/hackerdeck"
+end
+
+;; Tylko dwie znane nazwy - JS nie wybiera sciezki.
+pub fn path_for(name: string) -> string is
+    if name == "instances" is return config_dir() + "/instances.json" end
+    if name == "keymaps" is return config_dir() + "/keymaps.json" end
+    return ""
+end
+
+pub fn ensure_dir() is
+    process::run_args("mkdir", ["-p", config_dir()])
+end
