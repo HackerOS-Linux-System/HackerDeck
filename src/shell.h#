@@ -1,0 +1,66 @@
+use "std -> strings" from "strings"
+
+;; Cytuje wartosc (POSIX, apostrofy) tak, by byla bezpieczna w linii polecen.
+pub fn sq(s: string) -> string is
+    return "'" + strings::join(string_split(s, "'"), "'\\''") + "'"
+end
+
+fn safe_chars() -> string is
+    return "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
+end
+
+;; Niepusta nazwa z liter, cyfr, '_' i '-' (max 48 znakow).
+pub fn is_safe_name(s: string) -> bool is
+    let n: int = string_len(s)
+    if n == 0 || n > 48 is return false end
+    let allowed: string = safe_chars()
+    let mut i: int = 0
+    while i < n is
+        if string_find(allowed, string_slice(s, i, i + 1)) < 0 is return false end
+        i += 1
+    end
+    return true
+end
+
+;; Zamienia kazdy niedozwolony znak na '_' (do nazw plikow tymczasowych).
+pub fn sanitize(s: string) -> string is
+    let allowed: string = safe_chars()
+    let n: int = string_len(s)
+    let mut out: string = ""
+    let mut i: int = 0
+    while i < n is
+        let ch: string = string_slice(s, i, i + 1)
+        if string_find(allowed, ch) >= 0 is
+            out = out + ch
+        else is
+            out = out + "_"
+        end
+        i += 1
+    end
+    if string_len(out) > 48 is return string_slice(out, 0, 48) end
+    return out
+end
+
+fn non_default_dir(data_dir: string) -> bool is
+    return data_dir != "" && data_dir != "/var/lib/waydroid"
+end
+
+;; Polecenie dla zadania w tle: stdout+stderr razem, kod wyjscia w ostatniej
+;; linii jako "@@exit=N" (frontend: api.ts -> parseJob). stdin = /dev/null,
+;; zeby `waydroid shell` / `adb shell` nie wisialy w oczekiwaniu na wejscie.
+pub fn wrap(script: string, data_dir: string) -> string is
+    let mut pre: string = ""
+    if non_default_dir(data_dir) is
+        pre = "export WAYDROID_DATA=" + sq(data_dir) + "; "
+    end
+    return "(" + pre + script + ") </dev/null 2>&1; echo \"@@exit=$?\""
+end
+
+;; Polecenie "odpal i zapomnij" (tapniecia, swipe) dla process::spawn.
+pub fn bg(cmd: string, data_dir: string) -> string is
+    let mut pre: string = ""
+    if non_default_dir(data_dir) is
+        pre = "WAYDROID_DATA=" + sq(data_dir) + " "
+    end
+    return pre + cmd + " </dev/null >/dev/null 2>&1"
+end
