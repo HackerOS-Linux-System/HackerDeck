@@ -1,0 +1,231 @@
+use "bit -> silver"  from "silver"
+use "std -> fs"      from "fs"
+use "std -> process" from "process"
+
+mod shell
+mod actions
+mod store
+
+;; ---------- pomocnicze ----------
+fn err(code: string, msg: string) -> string is
+    return data::set_str(data::set_str(data::object(), "error", msg), "code", code)
+end
+
+fn ok_json() -> string is
+    return data::set_bool(data::object(), "ok", true)
+end
+
+;; ---------- komendy (JS -> H#) ----------
+
+;; Czy jest Waydroid i /dev/binder? (decyduje o kreatorze pierwszego uruchomienia)
+fn env_check(args: string) -> string is
+    let mut r: string = data::object()
+    r = data::set_bool(r, "waydroid", process::which("waydroid") != "")
+    r = data::set_bool(r, "binder", fs::exists("/dev/binder"))
+    return r
+end
+
+;; {"name": "instances"|"keymaps"} -> {"exists": bool, "text": "<zawartosc pliku>"}
+;; Dla keymaps dodatkowo zasila stan "keymaps" uzywany przez globalne skroty.
+fn config_load(args: string) -> string is
+    let name: string = data::get_str(args, "name")
+    let path: string = store::path_for(name)
+    if path == "" is return err("invalid_args", "unknown config: " + name) end
+    let mut r: string = data::object()
+    if !fs::exists(path) is
+        r = data::set_bool(r, "exists", false)
+        r = data::set_str(r, "text", "")
+        return r
+    end
+    let text: string = fs::read(path)
+    r = data::set_bool(r, "exists", true)
+    r = data::set_str(r, "text", text)
+    if name == "keymaps" is return ui::with(r, ui::set_state("keymaps", text)) end
+    return r
+end
+
+;; {"name": "instances"|"keymaps", "text": "<JSON jako tekst>"}
+fn config_save(args: string) -> string is
+    let name: string = data::get_str(args, "name")
+    let path: string = store::path_for(name)
+    if path == "" is return err("invalid_args", "unknown config: " + name) end
+    let text: string = data::get_str(args, "text")
+    store::ensure_dir()
+    fs::write(path, text)
+    if name == "keymaps" is return ui::with(ok_json(), ui::set_state("keymaps", text)) end
+    return ok_json()
+end
+
+;; Kontekst widoczny dla hookow H#: aktywna strona, tryb FPS, katalog danych instancji.
+fn set_ctx(args: string) -> string is
+    let key: string = data::get_str(args, "key")
+    if key != "page" && key != "fps" && key != "data_dir" is
+        return err("invalid_args", "unknown ctx key: " + key)
+    end
+    return ui::with(ok_json(), ui::set_state(key, data::get_str(args, "value")))
+end
+
+;; {"id", "action", "arg", "arg2", "data_dir"} -> zadanie w kolejce
+fn exec_job(args: string) -> string is
+    let id: string = data::get_str(args, "id")
+    let action: string = data::get_str(args, "action")
+    if !shell::is_safe_name(id) is return err("invalid_args", "bad job id") end
+    let script: string = actions::script_for(action, data::get_str(args, "arg"), data::get_str(args, "arg2"))
+    if script == "" is return err("invalid_args", "unknown action or bad arguments: " + action) end
+    let cmd: string = shell::wrap(script, data::get_str(args, "data_dir"))
+    return ui::with(data::set_bool(data::object(), "queued", true), ui::set_state("job_" + id, cmd))
+end
+
+;; ---------- on_tick: kolejka zadan, polozenie sceny keymappera, Mouse Steering ----------
+
+;; Zadania: klucze "job_<id>" w stanie -> app::spawn_task (wynik: silver://task).
+fn pump_jobs(a: app::App) -> app::App is
+    let mut x: app::App = a
+    let keys: [string] = data::keys(x.store)
+    let mut i: int = 0
+    while i < array_len(keys) is
+        let k: string = keys[i]
+        i += 1
+        if string_len(k) > 4 && string_slice(k, 0, 4) == "job_" is
+            let cmd: string = data::get_str(x.store, k)
+            x.store = data::remove_key(x.store, k)
+            if cmd != "" is
+                x = app::spawn_task(x, string_slice(k, 4, string_len(k)), cmd, "")
+            end
+        end
+    end
+    return x
+end
+
+;; Polozenie i rozmiar elementu #stage (okno -> JS nie widzi ukladu, wiec mu je podajemy).
+fn stage_json(x: app::App) -> string is
+    let nid: int = dom::find_by_id(x.dom, "stage")
+    if nid < 0 is return "" end
+    let n: int = array_len(x.boxes)
+    let mut i: int = 0
+    while i < n is
+        let b: layout::LayoutBox = x.boxes[i]
+        if b.node_id == nid && b.kind == "box" is
+            let mut j: string = data::object()
+            j = data::set_int(j, "x", b.x)
+            j = data::set_int(j, "y", b.y - x.scroll_y)
+            j = data::set_int(j, "w", b.w)
+            j = data::set_int(j, "h", b.h)
+            return j
+        end
+        i += 1
+    end
+    return ""
+end
+
+fn pump_stage(a: app::App) -> app::App is
+    if app::state(a, "page") != "keymapper" is return a end
+    let j: string = stage_json(a)
+    if j == "" is return a end
+    if j == app::state(a, "stage") is return a end
+    let x: app::App = app::set_state(a, "stage", j)
+    app::emit(x, "hd:stage", j)
+    return x
+end
+
+fn reset_mouse(a: app::App) -> app::App is
+    let mut x: app::App = a
+    if data::has_key(x.store, "lx") is
+        x.store = data::remove_key(data::remove_key(x.store, "lx"), "ly")
+    end
+    return x
+end
+
+;; Mouse Steering: roznica pozycji kursora miedzy tickami -> swipe w Waydroid
+;; (srodek 360,640; czulosc x2.5 - jak w wersji Flutter).
+fn pump_mouse(a: app::App) -> app::App is
+    let mut x: app::App = a
+    if app::state(x, "fps") != "1" || app::state(x, "page") != "mouse" || !x.has_focus || x.mouse_x < 0 is
+        return reset_mouse(x)
+    end
+    if !data::has_key(x.store, "lx") is
+        x.store = data::set_int(data::set_int(x.store, "lx", x.mouse_x), "ly", x.mouse_y)
+        return x
+    end
+    let dx: int = x.mouse_x - data::get_int(x.store, "lx")
+    let dy: int = x.mouse_y - data::get_int(x.store, "ly")
+    x.store = data::set_int(data::set_int(x.store, "lx", x.mouse_x), "ly", x.mouse_y)
+    if dx != 0 || dy != 0 is
+        let ex: int = 360 + dx * 5 / 2
+        let ey: int = 640 + dy * 5 / 2
+        let cmd: string = "waydroid shell input touchscreen swipe 360 640 " + to_string(ex) + " " + to_string(ey) + " 80"
+        process::spawn(shell::bg(cmd, app::state(x, "data_dir")))
+    end
+    return x
+end
+
+fn on_tick(a: app::App) -> app::App is
+    let mut x: app::App = a
+    x = pump_jobs(x)
+    x = pump_stage(x)
+    x = pump_mouse(x)
+    return x
+end
+
+;; ---------- on_event: globalne skroty (F1 + zmapowane klawisze) ----------
+
+fn toggle_fps(a: app::App) -> app::App is
+    let on: bool = app::state(a, "fps") != "1"
+    let mut x: app::App = app::set_state(a, "fps", if on then "1" else "0")
+    x = reset_mouse(x)
+    app::emit(x, "hd:fps", data::set_bool(data::object(), "on", on))
+    return x
+end
+
+fn on_event(a: app::App, name: string, payload: string) -> app::App is
+    if name != "keydown" is return a end
+    let mut key: string = string_lower(data::get_str(payload, "key"))
+    if key == " " is key = "space" end
+    if key == "f1" is return toggle_fps(a) end
+
+    ;; pisanie w polu tekstowym nie moze odpalac tapniec
+    if a.focused_node >= 0 is
+        let tag: string = a.dom.nodes[a.focused_node].tag
+        if tag == "input" || tag == "textarea" is return a end
+    end
+
+    let list: [string] = data::items(app::state(a, "keymaps"))
+    let mut i: int = 0
+    while i < array_len(list) is
+        let m: string = list[i]
+        i += 1
+        if data::get_str(m, "key") == key && data::get_str(m, "type") == "tap" is
+            let cmd: string = "waydroid shell input tap " + to_string(data::get_int(m, "x")) + " " + to_string(data::get_int(m, "y"))
+            process::spawn(shell::bg(cmd, app::state(a, "data_dir")))
+            break
+        end
+    end
+    return a
+end
+
+fn main() is
+    let mut a = app::new("HackerDeck v4.0", 1400, 900)
+    a = app::set_min_size(a, 900, 650)
+    a = app::set_theme(a, "dark")
+    a = app::load_html(a, "frontend/index.html")
+    a = app::load_css(a, "frontend/style.css")
+
+    a = app::command_js_only(a, "env_check", env_check)
+    a = app::command_js_only(a, "config_load", config_load)
+    a = app::command_js_only(a, "config_save", config_save)
+    a = app::command_js_only(a, "set_ctx", set_ctx)
+    a = app::command_js_only(a, "exec", exec_job)
+
+    a = app::on_tick(a, on_tick)
+    a = app::set_tick_interval(a, 40)
+    a = app::on_event(a, on_event)
+
+    a = app::set_state(a, "fps", "0")
+    a = app::set_state(a, "page", "dashboard")
+    a = app::set_state(a, "data_dir", "")
+    a = app::set_state(a, "keymaps", "[]")
+
+    a = app::load_js(a, ["frontend/dist/app.js"])
+    a = app::enable_hot_reload(a)
+    app::run(a)
+end
