@@ -55,7 +55,7 @@ export async function startInstall(): Promise<void> {
       switch (step.kind) {
         case 'modprobe':
           if (res.lines.some((l) => l.includes('already exists'))) {
-            wlog('  ✓ /dev/binder już istnieje (binder wbudowany w kernel)', 'ok');
+            wlog('  OK /dev/binder już istnieje (binder wbudowany w kernel)', 'ok');
           }
           break;
         case 'binderPersist':
@@ -74,9 +74,9 @@ export async function startInstall(): Promise<void> {
     }
 
     if (ok) {
-      wlog(`✔ ${step.label}`, 'ok');
+      wlog(`OK ${step.label}`, 'ok');
     } else {
-      wlog(`✖ Krok "${step.label}" zakończył się błędem. Sprawdź logi powyżej.`, 'err');
+      wlog(`BŁĄD Krok "${step.label}" zakończył się błędem. Sprawdź logi powyżej.`, 'err');
       failed.set(true);
       running.set(false);
       return;
