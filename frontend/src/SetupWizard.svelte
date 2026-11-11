@@ -13,11 +13,11 @@
   });
 
   const features: Array<[string, string, string]> = [
-    ['🐧', 'LXC', 'Kontenery Linux — wymagane przez Waydroid'],
-    ['⚙️', 'Moduł binder_linux', 'Sterownik kernela (modprobe / wbudowany w ≥5.12)'],
-    ['📡', 'ADB + wget', 'Android Debug Bridge i pobieranie APK'],
-    ['🤖', 'Waydroid', 'Emulator Androida dla Linuksa'],
-    ['🛒', 'Google Play Services', 'GAPPS — opcjonalne, do Sklepu Play'],
+    ['LX', 'LXC', 'Kontenery Linux — wymagane przez Waydroid'],
+    ['BD', 'Moduł binder_linux', 'Sterownik kernela (modprobe / wbudowany od 5.12)'],
+    ['AD', 'ADB + wget', 'Android Debug Bridge i pobieranie APK'],
+    ['WD', 'Waydroid', 'Emulator Androida dla Linuksa'],
+    ['GP', 'Google Play Services', 'GAPPS — opcjonalne, do Sklepu Play'],
   ];
 </script>
 
@@ -25,7 +25,7 @@
   <div class="wizard">
     {#if $screen === 'welcome'}
       <div class="wiz-head">
-        <div class="wiz-logo">🤖</div>
+        <div class="wiz-logo">HD</div>
         <div>
           <div class="wiz-title">HackerDeck v4.0</div>
           <div class="faint small">Kreator pierwszego uruchomienia</div>
@@ -42,10 +42,10 @@
         </div>
       {/each}
       <div class="banner amber">
-        <span>⚠️</span>
-        <span>Wymagane: Debian trixie/forky, kernel ≥ 5.12 z obsługą binder, dostęp do pkexec.</span>
+        <span>[!]</span>
+        <span>Wymagane: Debian trixie/forky, kernel 5.12 lub nowszy z obsługą binder, dostęp do pkexec.</span>
       </div>
-      <button class="btn big-btn" onclick={startInstall}>🚀 Zainstaluj wszystko automatycznie</button>
+      <button class="btn big-btn" onclick={startInstall}>>> Zainstaluj wszystko automatycznie</button>
       <button class="btn flat wide" onclick={() => finishSetup()}>Pomiń — Waydroid jest już zainstalowany</button>
     {:else if $screen === 'installing'}
       <div class="wiz-title plain">Trwa instalacja…</div>
@@ -57,14 +57,14 @@
         {/each}
       </div>
       {#if $failed}
-        <button class="btn" onclick={resetWizard}>↻ Spróbuj ponownie</button>
+        <button class="btn" onclick={resetWizard}>Spróbuj ponownie</button>
       {/if}
     {:else}
       <div class="done">
-        <div class="done-glyph">✔</div>
+        <div class="done-glyph">OK</div>
         <div class="done-title">Instalacja zakończona!</div>
         <p class="muted center">Waydroid i wszystkie zależności są gotowe.<br />Przyjemnego korzystania z HackerDeck!</p>
-        <button class="btn big-btn" onclick={() => finishSetup()}>▶ Uruchom HackerDeck</button>
+        <button class="btn big-btn" onclick={() => finishSetup()}>Uruchom HackerDeck</button>
       </div>
     {/if}
   </div>
