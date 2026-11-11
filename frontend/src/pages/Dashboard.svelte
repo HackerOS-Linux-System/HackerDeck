@@ -9,10 +9,10 @@
   <h1 class="page-title big">Dashboard</h1>
 
   <div class="quick-row">
-    <button class="quick green" onclick={startSession}><span class="q-glyph">▶</span><span>Start sesji</span></button>
-    <button class="quick red" onclick={stopSession}><span class="q-glyph">■</span><span>Stop wszystko</span></button>
-    <button class="quick blue" onclick={showFullUi}><span class="q-glyph">↗</span><span>Pełny UI</span></button>
-    <button class="quick orange" onclick={() => updateStatus()}><span class="q-glyph">↻</span><span>Odśwież status</span></button>
+    <button class="quick green" onclick={startSession}><span class="q-glyph">&gt;</span><span>Start sesji</span></button>
+    <button class="quick red" onclick={stopSession}><span class="q-glyph">#</span><span>Stop wszystko</span></button>
+    <button class="quick blue" onclick={showFullUi}><span class="q-glyph">^</span><span>Pełny UI</span></button>
+    <button class="quick orange" onclick={() => updateStatus()}><span class="q-glyph">~</span><span>Odśwież status</span></button>
   </div>
 
   <div class="stat-row">
