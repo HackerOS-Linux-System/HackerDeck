@@ -7,26 +7,26 @@
 
   const sections: Section[] = [
     { title: 'Waydroid', tools: [
-      { glyph: '⟲', label: 'Reinicjalizuj (GAPPS)', action: 'waydroid_init_gapps' },
-      { glyph: '⇄', label: 'Reinicjalizuj (vanilla)', action: 'waydroid_init' },
-      { glyph: '⚙', label: 'waydroid shell', action: 'waydroid_shell' },
-      { glyph: '☢', label: 'Logi kontenera', action: 'container_logs' },
-      { glyph: 'ⓘ', label: 'waydroid status', action: 'status' },
+      { glyph: 'R', label: 'Reinicjalizuj (GAPPS)', action: 'waydroid_init_gapps' },
+      { glyph: 'R', label: 'Reinicjalizuj (vanilla)', action: 'waydroid_init' },
+      { glyph: '*', label: 'waydroid shell', action: 'waydroid_shell' },
+      { glyph: 'L', label: 'Logi kontenera', action: 'container_logs' },
+      { glyph: 'i', label: 'waydroid status', action: 'status' },
     ] },
     { title: 'Binder / Kernel', tools: [
-      { glyph: '▣', label: 'Załaduj binder_linux', action: 'binder_modprobe' },
-      { glyph: '☰', label: 'Sprawdź /dev/binder', action: 'binder_ls' },
+      { glyph: 'M', label: 'Załaduj binder_linux', action: 'binder_modprobe' },
+      { glyph: '=', label: 'Sprawdź /dev/binder', action: 'binder_ls' },
       { glyph: '>_', label: 'Wersja kernela', action: 'kernel_version' },
     ] },
     { title: 'ADB', tools: [
-      { glyph: '⌁', label: 'Lista urządzeń ADB', action: 'adb_devices' },
+      { glyph: 'A', label: 'Lista urządzeń ADB', action: 'adb_devices' },
       { glyph: '>_', label: 'ADB shell', action: 'adb_shell' },
-      { glyph: '⇆', label: 'Ping test (przez ADB)', action: 'adb_ping' },
+      { glyph: 'P', label: 'Ping test (przez ADB)', action: 'adb_ping' },
     ] },
     { title: 'System', tools: [
-      { glyph: '▣', label: 'Użycie RAM', action: 'ram' },
-      { glyph: '▤', label: 'Dysk /var/lib/waydroid', action: 'disk' },
-      { glyph: '✕', label: 'Wyczyść logi' },
+      { glyph: 'M', label: 'Użycie RAM', action: 'ram' },
+      { glyph: 'D', label: 'Dysk /var/lib/waydroid', action: 'disk' },
+      { glyph: 'x', label: 'Wyczyść logi' },
     ] },
   ];
 
