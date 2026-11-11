@@ -106,3 +106,8 @@ export function onFps(cb: (on: boolean) => void): () => void {
 export function onStage(cb: (r: { x: number; y: number; w: number; h: number }) => void): () => void {
   return silver.listen<{ x: number; y: number; w: number; h: number }>('hd:stage', cb);
 }
+
+/** Plik upuszczony na okno (Silver 0.4: silver://drop). */
+export function onDrop(cb: (p: SilverDropPayload) => void): () => void {
+  return silver.listen<SilverDropPayload>('silver://drop', cb);
+}
