@@ -29,7 +29,7 @@
   </div>
 
   <div class="banner blue">
-    <span>ⓘ</span>
+    <span>i</span>
     <span>Darmowe aplikacje open-source. Przy braku bezpośredniego linku APK otworzy się strona pobierania.</span>
   </div>
 
@@ -44,7 +44,7 @@
         <div class="bold">{app.name}</div>
         <div class="faint tiny">v{app.version}</div>
         <div class="soft small store-desc">{app.description}</div>
-        <button class="btn wide" onclick={() => storeInstall(app)}>⬇ Zainstaluj</button>
+        <button class="btn wide" onclick={() => storeInstall(app)}>Zainstaluj</button>
       </div>
     {/each}
   </div>
