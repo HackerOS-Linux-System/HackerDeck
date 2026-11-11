@@ -17,7 +17,7 @@
   <button class="log-head" onclick={() => logExpanded.update((v) => !v)}>
     <span class="log-title">&gt;_ Logi</span>
     <span class="log-count">({$logs.length})</span>
-    <span class="log-caret">{$logExpanded ? '▾' : '▴'}</span>
+    <span class="log-caret">{$logExpanded ? 'v' : '^'}</span>
   </button>
   {#if $logExpanded}
     <div class="log-body" bind:this={box}>
