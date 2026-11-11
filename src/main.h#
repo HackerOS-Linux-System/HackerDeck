@@ -1,10 +1,12 @@
 use "bit -> silver"  from "silver"
 use "std -> fs"      from "fs"
 use "std -> process" from "process"
+use "std -> env"     from "env"
 
 mod shell
 mod actions
 mod store
+mod assets
 
 ;; ---------- pomocnicze ----------
 fn err(code: string, msg: string) -> string is
@@ -80,6 +82,9 @@ end
 
 ;; Zadania: klucze "job_<id>" w stanie -> app::spawn_task (wynik: silver://task).
 fn pump_jobs(a: app::App) -> app::App is
+    ;; Tick leci co 40 ms, a backend C++ H# nie zwalnia pamieci: parsowanie calego store (data::keys) w kazdym
+    ;; ticku zostawialo ~100 KB smieci/tick. Parsujemy tylko, gdy w store naprawde jest zadanie "job_*".
+    if string_find(a.store, "\"job_") < 0 is return a end
     let mut x: app::App = a
     let keys: [string] = data::keys(x.store)
     let mut i: int = 0
@@ -118,8 +123,15 @@ fn stage_json(x: app::App) -> string is
     return ""
 end
 
+;; Tani test "klucz == wartosc" w store bez parsowania JSON (tick leci co 40 ms, a app::state/data::* parsuja
+;; caly store, co przy backendzie C++ H# bez zwalniania pamieci oznacza ciagly wyciek).
+fn store_has(store: string, key: string, val: string) -> bool is
+    let k: string = "\"" + key + "\":"
+    return string_find(store, k + "\"" + val + "\"") >= 0 || string_find(store, k + " \"" + val + "\"") >= 0
+end
+
 fn pump_stage(a: app::App) -> app::App is
-    if app::state(a, "page") != "keymapper" is return a end
+    if !store_has(a.store, "page", "keymapper") is return a end
     let j: string = stage_json(a)
     if j == "" is return a end
     if j == app::state(a, "stage") is return a end
@@ -130,7 +142,7 @@ end
 
 fn reset_mouse(a: app::App) -> app::App is
     let mut x: app::App = a
-    if data::has_key(x.store, "lx") is
+    if string_find(x.store, "\"lx\"") >= 0 is
         x.store = data::remove_key(data::remove_key(x.store, "lx"), "ly")
     end
     return x
@@ -140,7 +152,7 @@ end
 ;; (srodek 360,640; czulosc x2.5 - jak w wersji Flutter).
 fn pump_mouse(a: app::App) -> app::App is
     let mut x: app::App = a
-    if app::state(x, "fps") != "1" || app::state(x, "page") != "mouse" || !x.has_focus || x.mouse_x < 0 is
+    if !x.has_focus || x.mouse_x < 0 || !store_has(x.store, "fps", "1") || !store_has(x.store, "page", "mouse") is
         return reset_mouse(x)
     end
     if !data::has_key(x.store, "lx") is
@@ -207,14 +219,25 @@ fn main() is
     let mut a = app::new("HackerDeck v4.0", 1400, 900)
     a = app::set_min_size(a, 900, 650)
     a = app::set_theme(a, "dark")
-    a = app::load_html(a, "frontend/index.html")
-    a = app::load_css(a, "frontend/style.css")
+    ;; Frontend jest wbudowany w binarke (src/assets.h#, generowany przez frontend/build.mjs).
+    ;; HACKERDECK_DEV=1 -> pliki z katalogu frontend/ + hot reload (praca nad UI).
+    let dev: bool = env::get_or("HACKERDECK_DEV", "") == "1"
+    if dev is
+        a = app::load_html(a, "frontend/index.html")
+        a = app::load_css(a, "frontend/style.css")
+    else
+        a = app::load_html_str(a, assets::index_html())
+        a = app::load_css_str(a, assets::style_css())
+    end
 
-    a = app::command_js_only(a, "env_check", env_check)
-    a = app::command_js_only(a, "config_load", config_load)
-    a = app::command_js_only(a, "config_save", config_save)
-    a = app::command_js_only(a, "set_ctx", set_ctx)
-    a = app::command_js_only(a, "exec", exec_job)
+    ;; Silver 0.4: komendy tylko dla JS, z uprawnieniami i wymaganymi kluczami argumentow.
+    a.router = ipc::register_full(a.router, "env_check", env_check, ipc::Origin::JsOnly, "", [])
+    a.router = ipc::register_full(a.router, "config_load", config_load, ipc::Origin::JsOnly, "fs", ["name"])
+    a.router = ipc::register_full(a.router, "config_save", config_save, ipc::Origin::JsOnly, "fs", ["name", "text"])
+    a.router = ipc::register_full(a.router, "set_ctx", set_ctx, ipc::Origin::JsOnly, "", ["key", "value"])
+    a.router = ipc::register_full(a.router, "exec", exec_job, ipc::Origin::JsOnly, "shell", ["id", "action"])
+    a = app::allow_js(a, "fs")
+    a = app::allow_js(a, "shell")
 
     a = app::on_tick(a, on_tick)
     a = app::set_tick_interval(a, 40)
@@ -225,7 +248,9 @@ fn main() is
     a = app::set_state(a, "data_dir", "")
     a = app::set_state(a, "keymaps", "[]")
 
-    a = app::load_js(a, ["frontend/dist/app.js"])
-    a = app::enable_hot_reload(a)
+    if dev is
+        a = app::load_js(a, ["frontend/dist/app.js"])
+        a = app::enable_hot_reload(a)
+    end
     app::run(a)
 end
