@@ -2,8 +2,8 @@ import { get } from 'svelte/store';
 import * as api from './api';
 import type { Action, JobResult } from './api';
 import {
-  DEFAULT_DATA_DIR, WD_H, WD_W, circlesToMappings, mappingsToCircles,
-  type AppInfo, type Instance, type KeyMapping, type LogKind, type StoreApp,
+  DEFAULT_DATA_DIR, TABS, WD_H, WD_W, circlesToMappings, mappingsToCircles,
+  type AppInfo, type Instance, type TabId, type KeyMapping, type LogKind, type StoreApp,
 } from './models';
 import {
   apps, circles, currentInstance, checking, dialog, instances, logs, mouseSteering,
@@ -23,8 +23,8 @@ function timestamp(): string {
 }
 
 export function classify(msg: string): LogKind {
-  if (msg.includes('❌') || msg.includes('⚠️')) return 'err';
-  if (msg.includes('✅') || msg.includes('🎉')) return 'ok';
+  if (msg.includes('[X]') || msg.includes('[!]')) return 'err';
+  if (msg.includes('[OK]')) return 'ok';
   return 'info';
 }
 
@@ -82,15 +82,15 @@ function describe(action: Action, arg: string, arg2: string): string {
 
 /** Odpowiednik `_run`: zleca akcję, loguje wyjście, odświeża status. */
 export async function run(action: Action, arg = '', arg2 = '', silent = false): Promise<JobResult | null> {
-  if (!silent) log(`🚀 ${describe(action, arg, arg2)}`);
+  if (!silent) log(`>> ${describe(action, arg, arg2)}`);
   try {
     const res = await api.runJob(action, { arg, arg2, dataDir: currentDataDir() });
     for (const line of res.lines) log(line);
-    if (res.code !== 0 && !silent) log(`⚠️ Kod wyjścia: ${res.code}`);
+    if (res.code !== 0 && !silent) log(`[!] Kod wyjścia: ${res.code}`);
     void updateStatus();
     return res;
   } catch (e) {
-    if (!silent) log(`❌ Błąd: ${String(e)}`);
+    if (!silent) log(`[X] Błąd: ${String(e)}`);
     return null;
   }
 }
@@ -154,18 +154,18 @@ export function isValidInstanceName(name: string): boolean {
 
 export async function createInstance(name: string): Promise<boolean> {
   if (!isValidInstanceName(name)) {
-    log('❌ Nazwa instancji: tylko litery, cyfry, „_” i „-” (max 48 znaków)');
+    log('[X] Nazwa instancji: tylko litery, cyfry, „_” i „-” (max 48 znaków)');
     return false;
   }
   const dataDir = `/var/lib/waydroid_${name}`;
   const res = await run('instance_create', name);
   if (!res || res.code !== 0) {
-    log(`❌ Nie udało się utworzyć katalogu ${dataDir}`);
+    log(`[X] Nie udało się utworzyć katalogu ${dataDir}`);
     return false;
   }
   instances.update((l) => [...l, { name, data_dir: dataDir }]);
   await saveInstances();
-  log(`✅ Instancja "${name}" utworzona`);
+  log(`[OK] Instancja "${name}" utworzona`);
   return true;
 }
 
@@ -173,12 +173,12 @@ export async function switchInstance(i: number): Promise<void> {
   currentInstance.set(i);
   await api.call('set_ctx', { key: 'data_dir', value: currentDataDir() }).catch(() => undefined);
   void updateStatus();
-  log(`🔄 Przełączono → ${get(instances)[i].name}`);
+  log(`<> Przełączono -> ${get(instances)[i].name}`);
 }
 
 export async function deleteInstance(i: number): Promise<void> {
   if (i === 0) {
-    log('❌ Nie można usunąć domyślnej instancji');
+    log('[X] Nie można usunąć domyślnej instancji');
     return;
   }
   instances.update((l) => l.filter((_, idx) => idx !== i));
@@ -230,17 +230,34 @@ export async function installApk(): Promise<void> {
 }
 
 export async function storeInstall(app: StoreApp): Promise<void> {
-  log(`📥 Pobieranie ${app.name}…`);
+  log(`v Pobieranie ${app.name}…`);
   const res = await run('store_install', app.name, app.downloadUrl, true);
   if (!res) return;
   if (res.code === 3) {
-    log('❌ Bezpośrednie pobieranie nieudane — otwieranie strony…');
+    log('[X] Bezpośrednie pobieranie nieudane — otwieranie strony…');
   } else if (res.code !== 0) {
-    log(`⚠️ Kod wyjścia: ${res.code}`);
+    log(`[!] Kod wyjścia: ${res.code}`);
   } else {
     await sleep(2000);
     void refreshApps();
   }
+}
+
+/** Instalacja upuszczonych plików .apk (drag & drop, Silver 0.4). */
+export async function installDropped(path: string): Promise<void> {
+  if (!/\.apk$/i.test(path)) {
+    log(`[!] Upuszczono plik, który nie jest APK: ${path}`);
+    return;
+  }
+  const res = await run('app_install', path);
+  notify('HackerDeck', res && res.code === 0 ? 'Zainstalowano APK' : 'Instalacja APK nie powiodła się');
+  await sleep(2000);
+  void refreshApps();
+}
+
+/** Powiadomienie systemowe (nie przerywa działania, gdy niedostępne). */
+function notify(title: string, body: string): void {
+  void silver.window.notify(title, body).catch(() => undefined);
 }
 
 export const launchApp = (pkg: string) => run('app_launch', pkg);
@@ -328,7 +345,7 @@ export function stagePointToWaydroid(clientX: number, clientY: number): { x: num
 export async function toggleMouseSteering(on: boolean): Promise<void> {
   mouseSteering.set(on);
   await api.call('set_ctx', { key: 'fps', value: on ? '1' : '0' }).catch(() => undefined);
-  log(on ? '🎮 Mouse Steering AKTYWNY — F1 wyłącza' : '🖱️ Mouse Steering wyłączony');
+  log(on ? '[FPS] Mouse Steering AKTYWNY — F1 wyłącza' : '[MYSZ] Mouse Steering wyłączony');
 }
 
 // ── Narzędzia ──────────────────────────────────
@@ -351,11 +368,17 @@ async function enterHome(): Promise<void> {
 /** Start: zdarzenia z H#, sprawdzenie środowiska (Waydroid + /dev/binder), ewentualnie kreator. */
 export async function boot(): Promise<void> {
   disposers.push(api.onStage((r) => stage.set(r)));
+  disposers.push(api.onDrop((p) => { if (p.path) void installDropped(p.path); }));
+  try {
+    const saved = localStorage.getItem('hd:tab');
+    if (saved && TABS.includes(saved as TabId)) tab.set(saved as TabId);
+  } catch { /* brak localStorage */ }
   disposers.push(api.onFps((on) => {
     mouseSteering.set(on);
-    log(on ? '🎮 Mouse Steering AKTYWNY — F1 wyłącza' : '🖱️ Mouse Steering wyłączony');
+    log(on ? '[FPS] Mouse Steering AKTYWNY — F1 wyłącza' : '[MYSZ] Mouse Steering wyłączony');
   }));
   disposers.push(tab.subscribe((t) => {
+    try { localStorage.setItem('hd:tab', t); } catch { /* ignoruj */ }
     void api.call('set_ctx', { key: 'page', value: t }).catch(() => undefined);
   }));
 
