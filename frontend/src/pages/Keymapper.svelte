@@ -51,12 +51,12 @@
   <div class="page-head">
     <h1 class="page-title">Visual Keymapper</h1>
     <span class="spacer"></span>
-    <button class="btn" onclick={() => openDialog('key')}>＋ Dodaj klawisz</button>
+    <button class="btn" onclick={() => openDialog('key')}>+ Dodaj klawisz</button>
     <button class="btn outline" onclick={clearCircles}>Wyczyść</button>
   </div>
 
   <div class="banner blue">
-    <span>☝</span>
+    <span>*</span>
     <span>Kliknij kółko, by je zaznaczyć, potem kliknij miejsce na scenie. Prawy klik = usuń. Scena odwzorowuje ekran Waydroid ({WD_W}×{WD_H}).</span>
   </div>
 
@@ -67,11 +67,11 @@
       <input class="num" type="text" value={String(Math.round(cur.x))} oninput={(e) => setCoord('x', e.currentTarget.value)} />
       <span class="muted small">Y</span>
       <input class="num" type="text" value={String(Math.round(cur.y))} oninput={(e) => setCoord('y', e.currentTarget.value)} />
-      <button class="mini" onclick={() => nudgeCircle($selected, -10, 0)}>◀</button>
-      <button class="mini" onclick={() => nudgeCircle($selected, 10, 0)}>▶</button>
-      <button class="mini" onclick={() => nudgeCircle($selected, 0, -10)}>▲</button>
-      <button class="mini" onclick={() => nudgeCircle($selected, 0, 10)}>▼</button>
-      <button class="mini red" onclick={() => removeCircle($selected)}>✕</button>
+      <button class="mini" onclick={() => nudgeCircle($selected, -10, 0)}>&lt;</button>
+      <button class="mini" onclick={() => nudgeCircle($selected, 10, 0)}>&gt;</button>
+      <button class="mini" onclick={() => nudgeCircle($selected, 0, -10)}>^</button>
+      <button class="mini" onclick={() => nudgeCircle($selected, 0, 10)}>v</button>
+      <button class="mini red" onclick={() => removeCircle($selected)}>x</button>
     </div>
   {/if}
 
