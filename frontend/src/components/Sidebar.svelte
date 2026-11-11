@@ -3,13 +3,13 @@
   import type { TabId } from '../models';
 
   const items: Array<{ id: TabId; glyph: string; label: string }> = [
-    { id: 'dashboard', glyph: '⌂', label: 'Dashboard' },
-    { id: 'apps', glyph: '▦', label: 'Aplikacje' },
-    { id: 'store', glyph: '↓', label: 'Sklep APK' },
-    { id: 'instances', glyph: '☰', label: 'Instancje' },
-    { id: 'keymapper', glyph: '⌨', label: 'Keymapper' },
-    { id: 'mouse', glyph: '◉', label: 'Mouse FPS' },
-    { id: 'tools', glyph: '⚙', label: 'Narzędzia' },
+    { id: 'dashboard', glyph: 'H', label: 'Dashboard' },
+    { id: 'apps', glyph: '#', label: 'Aplikacje' },
+    { id: 'store', glyph: 'v', label: 'Sklep APK' },
+    { id: 'instances', glyph: '=', label: 'Instancje' },
+    { id: 'keymapper', glyph: 'K', label: 'Keymapper' },
+    { id: 'mouse', glyph: 'o', label: 'Mouse FPS' },
+    { id: 'tools', glyph: '*', label: 'Narzędzia' },
   ];
 </script>
 
