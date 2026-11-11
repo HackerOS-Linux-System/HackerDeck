@@ -1,10 +1,10 @@
-# HackerDeck (H# + bit + Silver + Svelte + TypeScript + CSS)
+# HackerDeck
 
 Nakładka na Waydroid (odpowiednik BlueStacks) — przepisana z Fluttera.
 
 | Warstwa | Technologia |
 |---|---|
-| Backend / okno | **H#** (`src/*.h#`), framework okienkowy **Silver** 0.2 |
+| Backend / okno | **H#** (`src/*.h#`), framework okienkowy **Silver** 0.4 |
 | Pakiety i build | **bit** (`Bit.hk`) |
 | Interfejs | **Svelte 5** (runes) + **TypeScript**, bundlowane esbuildem do `frontend/dist/app.js` |
 | Style | zwykły **CSS** (`frontend/style.css`, tylko podzbiór obsługiwany przez Silver) |
@@ -18,6 +18,13 @@ bit install-local   # do /usr/lib/HackerOS/HackerDeck + /usr/bin/hackerdeck
 ```
 Wymagania: `bit`, `h#`, SDL2 (`silver doctor`), `node`/`npm`, `zenity` lub `kdialog` (dialog wyboru APK).
 Dane: `~/.config/hackerdeck/{instances,keymaps}.json` — ten sam format co wersja Flutter.
+
+## Silver 0.4 — co wykorzystano
+- Komendy rejestrowane przez `ipc::register_full` (tylko JS, uprawnienia `fs`/`shell`, wymagane klucze argumentów) + `app::allow_js`.
+- Przeciągnięcie pliku `.apk` na okno instaluje go (`silver://drop`), po instalacji powiadomienie systemowe.
+- Ostatnia zakładka jest pamiętana w trwałym `localStorage`.
+- Dialogi mają `z-index`, animacje `@keyframes` i przejścia CSS; zależność `silver => ^0.4`.
+- Zadania w tle (`spawn_task`) działają na nowym mechanizmie plikowym silvera (naprawa błędu kompilacji `async_::spawn`).
 
 ## Architektura
 - `src/main.h#` — komendy dla JS (`env_check`, `config_load/save`, `set_ctx`, `exec`), `on_tick` (kolejka zadań, położenie sceny keymappera, Mouse Steering), `on_event` (F1 + zmapowane klawisze).
@@ -37,5 +44,18 @@ Zadania w tle: `exec` odkłada polecenie w stanie → `on_tick` odpala `app::spa
 
 ## Stan weryfikacji
 - ✅ Frontend: `npm install`, `esbuild` (bundle ~100 KB, składnia OK) i `svelte-check` — 0 błędów, 0 ostrzeżeń.
-- ⚠️ **Backend H# nie był kompilowany ani uruchamiany** (brak kompilatora H# w moim środowisku); pisany wg dokumentacji i kodu Silvera/bit. Oczekuj poprawek po pierwszym `bit build` (Silver 0.2 sam zastrzega to samo). Szczególnie sprawdź: `layout::LayoutBox`/`dom::find_by_id` w `main.h#` oraz zachowanie `app::emit` jako instrukcji.
+- ⚠️ **Backend H# nie był kompilowany ani uruchamiany** (brak kompilatora H# w moim środowisku); pisany wg dokumentacji i kodu Silvera/bit. Oczekuj poprawek po pierwszym `bit build` (Silver sam zastrzega to samo). Szczególnie sprawdź: `layout::LayoutBox`/`dom::find_by_id` w `main.h#` oraz zachowanie `app::emit` jako instrukcji.
 - ⚠️ Układ i wygląd w oknie Silvera nieoglądane.
+
+
+## Budowanie (linkowanie Silvera)
+`bit` linkuje statycznie, więc najpierw w katalogu silvera (`~/.hackeros/libs/silver/current`):
+`sh native/build-static-deps.sh && sh native/build.sh` (wymaga `pkg-config`, `libharfbuzz-dev`, `libfreetype-dev`),
+a przy starszym `bit` dodatkowo `. native/env.sh static` w tej samej powłoce przed `bit build --release`.
+Szczegóły: `docs/building-linux.md` w silverze.
+
+## Frontend wbudowany w binarkę
+`frontend/build.mjs` po zbudowaniu bundla generuje `src/assets.h#` (HTML + CSS + JS jako stringi H#),
+więc `hackerdeck` działa z dowolnego katalogu i nie wymaga plików `frontend/` obok binarki.
+Praca nad UI z plików i hot reload: `HACKERDECK_DEV=1 ./hackerdeck` (z katalogu projektu).
+Ikony to znaki ASCII — Silver rysuje jedną czcionką bez zastępczej dla brakujących glifów (emoji dawały „kwadraciki”).
