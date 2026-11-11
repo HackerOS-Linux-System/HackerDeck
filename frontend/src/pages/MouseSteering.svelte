@@ -26,7 +26,7 @@
   </div>
 
   <div class="track" class:active={$mouseSteering}>
-    <div class="track-glyph">◉</div>
+    <div class="track-glyph">o</div>
     <div class="track-text">
       {$mouseSteering
         ? 'Śledzenie aktywne — poruszaj myszą w tym oknie, aby sterować kamerą'
