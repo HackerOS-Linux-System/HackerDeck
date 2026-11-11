@@ -51,7 +51,7 @@
     </div>
     <LogPanel />
   </div>
-  <!-- Silver nie ma z-index: okna dialogowe muszą być ostatnie w dokumencie -->
+  <!-- Silver 0.4 ma z-index (.overlay), ale zostawiamy dialogi na końcu dokumentu -->
   {#if $dialog === 'instance'}
     <NewInstanceDialog />
   {:else if $dialog === 'key'}
