@@ -36,6 +36,7 @@ export interface StoreApp {
 }
 
 export type TabId = 'dashboard' | 'apps' | 'store' | 'instances' | 'keymapper' | 'mouse' | 'tools';
+export const TABS: TabId[] = ['dashboard', 'apps', 'store', 'instances', 'keymapper', 'mouse', 'tools'];
 
 export type LogKind = 'info' | 'err' | 'ok';
 
