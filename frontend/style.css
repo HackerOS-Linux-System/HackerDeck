@@ -247,7 +247,7 @@ input[type='text'], input[type='number'] {
 .tool:hover { background: rgba(255, 255, 255, 0.08); }
 .tool-glyph { color: var(--cyan); }
 
-/* ── okna dialogowe (ostatnie w dokumencie → na wierzchu) ── */
+/* ── okna dialogowe (Silver 0.4: z-index + ostatnie w dokumencie) ── */
 .overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   display: flex; align-items: center; justify-content: center;
@@ -275,3 +275,6 @@ input[type='text'], input[type='number'] {
 .done { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .done-glyph { font-size: 72px; color: var(--green); }
 .done-title { font-size: 26px; font-weight: bold; color: var(--green); }
+
+/* ── Silver 0.4: z-index (bez animacji/przejść: w trybie "motion" silver liczy układ częściej) ── */
+.overlay { z-index: 100; }
